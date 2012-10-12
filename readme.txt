@@ -1,7 +1,7 @@
-=== Web Shrinker - Website Preview Link Thumbnails ===
+=== Web Shrinker - Website Link Preview Thumbnails ===
 Contributors: webshrinker
 Donate link: http://www.webshrinker.com/
-Tags: website preview, link preview, website thumbnail, snapshot
+Tags: website preview, link preview, website thumbnail, snapshot, thumbnail, shrink, websnapr, web shrinker, webshrinker
 Requires at least: 2.9
 Tested up to: 3.4.2
 Stable tag: trunk
