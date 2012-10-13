@@ -21,6 +21,10 @@ A free or paid [Web Shrinker](http://www.webshrinker.com) account is required as
 1. Upload the `webshrinker.php` file to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 
+== Screenshots ==
+
+1. A sample link preview that appeared after moving the mouse over a link in a WordPress post.
+
 == Changelog ==
 
 = 1.0 =
