@@ -20,6 +20,8 @@ A free or paid [Web Shrinker](http://www.webshrinker.com) account is required as
 
 1. Upload the `webshrinker.php` file to the `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Click the 'Web Shrinker' link in the WordPress settings menu, add your API access key and click 'Save Changes' (REQUIRED)
+4. Then click on 'Enable' at the top of the 'Web Shrinker' settings screen
 
 == Screenshots ==
 
