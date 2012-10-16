@@ -16,6 +16,8 @@ However, if you are familiar with CSS, you can apply "link previews" to links in
 
 A free or paid [Web Shrinker](http://www.webshrinker.com) account is required as you will need a service API key.
 
+[youtube http://www.youtube.com/watch?v=1xGf00XQSH8]
+
 == Installation ==
 
 1. Upload the `webshrinker.php` file to the `/wp-content/plugins/` directory
