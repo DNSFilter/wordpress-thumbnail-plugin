@@ -1,14 +1,14 @@
 <?php
 /**
  * @package WebShrinker
- * @version 1.0
+ * @version 1.1
  */
 /*
 Plugin Name: Web Shrinker Site Thumbnails
 Plugin URI: http://www.webshrinker.com/
 Description: Add site previews to links in your posts
 Author: Web Shrinker
-Version: 1.0
+Version: 1.1
 */
 
 global $wpdb;
