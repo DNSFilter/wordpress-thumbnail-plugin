@@ -16,7 +16,9 @@ define(WEBSHRINKER_DB_TABLE, $wpdb->prefix . 'webshrinker');
 define(WEBSHRINKER_VERSION, '1.0');
 
 function webshrinker_init() {
-	wp_register_script('webshrinker', 'http://webshrinker.s3.amazonaws.com/js/webshrinker.js');
+	$js_url = (is_ssl() ? 'https' : 'http') . '://webshrinker.s3.amazonaws.com/js/webshrinker.js';
+
+	wp_register_script('webshrinker', $js_url);
 	wp_enqueue_script('webshrinker');
 	add_action('wp_head', 'webshrinker_js_init');
 }
