@@ -3,7 +3,7 @@ Contributors: webshrinker
 Donate link: http://www.webshrinker.com/
 Tags: website preview, link preview, website thumbnail, snapshot, thumbnail, shrink, websnapr, web shrinker, webshrinker
 Requires at least: 2.9
-Tested up to: 3.5.1
+Tested up to: 3.8.3
 Stable tag: trunk
 
 This plugin enables "link previews" within WordPress posts by showing a popup thumbnail of the destination website.
