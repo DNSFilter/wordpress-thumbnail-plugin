@@ -1,30 +1,44 @@
 <?php
 /**
  * @package WebShrinker
- * @version 1.1
+ * @version 2.0
  */
 /*
 Plugin Name: Web Shrinker Site Thumbnails
-Plugin URI: http://www.webshrinker.com/
+Plugin URI: https://www.webshrinker.com/
 Description: Add site previews to links in your posts
 Author: Web Shrinker
-Version: 1.1
+Version: 2.0
 */
 
 global $wpdb;
+global $webshrinker_settings;
+
 define(WEBSHRINKER_DB_TABLE, $wpdb->prefix . 'webshrinker');
-define(WEBSHRINKER_VERSION, '1.0');
+define(WEBSHRINKER_VERSION, '2.0');
+
+if (!class_exists("simple_html_dom_node"))
+	require_once("simple_html_dom.php");
 
 function webshrinker_init() {
-	$js_url = (is_ssl() ? 'https' : 'http') . '://webshrinker.s3.amazonaws.com/js/webshrinker.js';
+	$settings = webshrinker_get_db_settings();
+
+	if ($settings['secret_key'] == '') {
+		/* v1 */
+		$js_url = 'https://cdn.webshrinker.com/js/thumbnails/v1/webshrinker.js';
+		add_action('wp_head', 'webshrinker_js_init');
+	} else {
+		/* v2 */
+		$js_url = 'https://cdn.webshrinker.com/js/thumbnails/v2/webshrinker.js';
+	}
 
 	wp_register_script('webshrinker', $js_url);
 	wp_enqueue_script('webshrinker');
-	add_action('wp_head', 'webshrinker_js_init');
 }
 
 function webshrinker_js_init() {
 	$settings = webshrinker_get_db_settings();
+
 	$isHoverEnabled = ($settings['hover_enabled'] == 1) ? true : false;
 	$hoverSelector = $settings['hover_selector'];
 	$accessKey = $settings['access_key'];
@@ -45,9 +59,11 @@ function webshrinker_js_init() {
 function webshrinker_init_db() {
 	global $wpdb;
 
+	$result = true;
+
 	// First time install
 	if($wpdb->get_var("SHOW TABLES LIKE '".WEBSHRINKER_DB_TABLE."'") != WEBSHRINKER_DB_TABLE) {
-		$sql = "CREATE TABLE IF NOT EXISTS ".WEBSHRINKER_DB_TABLE." (access_key CHAR(36), hover_size CHAR(9), hover_enabled TINYINT(1), hover_selector TEXT)";
+		$sql = "CREATE TABLE IF NOT EXISTS ".WEBSHRINKER_DB_TABLE." (access_key CHAR(36), secret_key CHAR(36), hover_size CHAR(9), hover_enabled TINYINT(1), hover_selector TEXT)";
 		$result = $wpdb->query($sql);
 		$result = $result && $wpdb->query("TRUNCATE ".WEBSHRINKER_DB_TABLE);
 		$result = $result && $wpdb->insert(WEBSHRINKER_DB_TABLE, 
@@ -61,6 +77,18 @@ function webshrinker_init_db() {
 		add_option('webshrinker_version', WEBSHRINKER_VERSION);
 	} else {
 		// Upgrade path
+		$old_version = get_option('webshrinker_version', '1.0');
+
+		switch ($old_version) {
+			case '1.0':
+				$sql = "ALTER TABLE ".WEBSHRINKER_DB_TABLE." ADD COLUMN secret_key CHAR(36) AFTER access_key";
+				$result = $wpdb->query($sql);
+
+				if ($result)
+					update_option('webshrinker_version', WEBSHRINKER_VERSION);
+
+				break;
+		}
 	}
 
 	if (!$result) {
@@ -79,16 +107,21 @@ function webshrinker_uninstall_db() {
 	delete_option('webshrinker_version');
 }
 
-function webshrinker_get_db_settings() {
+function webshrinker_get_db_settings($force = false) {
 	global $wpdb;
+	global $webshrinker_settings;
 
-	$query = "SELECT access_key, hover_size, hover_enabled, hover_selector FROM " . WEBSHRINKER_DB_TABLE . " LIMIT 1";
+	if ($webshrinker_settings && !$force)
+		return $webshrinker_settings;
+
+	$query = "SELECT access_key, secret_key, hover_size, hover_enabled, hover_selector FROM " . WEBSHRINKER_DB_TABLE . " LIMIT 1";
 	$data = $wpdb->get_results($query, ARRAY_A);
 	$data = isset($data[0]) ? $data[0] : $data;
 
 	$data['hover_selector'] = base64_decode($data['hover_selector']);
 
-	return $data;
+	$webshrinker_settings = $data;
+	return $webshrinker_settings;
 }
 
 function webshrinker_add_pages() {
@@ -97,6 +130,8 @@ function webshrinker_add_pages() {
 
 function webshrinker_manager() {
 	global $wpdb;
+
+	$settings = webshrinker_get_db_settings();
 
 	// Did the manager save changes to this page
 	if (count($_POST) > 0) {
@@ -110,13 +145,14 @@ function webshrinker_manager() {
 
 				if ($key == "hover_enabled") {
 					// Make sure there is an access key to use
-					$settings = webshrinker_get_db_settings();
-					if (strlen($settings['access_key']) < 3) {
-						$error = "Before you can enable this plugin, you must specify your access key below.";
+					if ((strlen($settings['access_key']) < 3 || strlen($settings['secret_key']) < 3) && $value == "1") {
+						$error = "Before you can enable this plugin you must specify your access and secret key below.";
 						$success = false;
 						continue;
 					}
 				} else if ($key == "access_key") {
+					$value = trim($value);
+				} else if ($key == "secret_key") {
 					$value = trim($value);
 				} else if ($key == "hover_selector") {
 					$value = implode(",", array_filter(explode("\r\n", $value)));
@@ -135,10 +171,13 @@ function webshrinker_manager() {
 		}
 	}
 
-	$settings = webshrinker_get_db_settings();
+	// re-read the latest DB values
+	$settings = webshrinker_get_db_settings(true);
+
 	$isHoverEnabled = ($settings['hover_enabled'] == 1) ? true : false;
 	$hoverSelector = $settings['hover_selector'];
 	$accessKey = $settings['access_key'];
+	$secretKey = $settings['secret_key'];
 	$hoverSize = $settings['hover_size'];
 
 	echo "<script type=\"text/javascript\">\n";
@@ -173,9 +212,13 @@ function webshrinker_manager() {
 	echo "<div><span style='font-weight: bold;'>Note:</span> Enter one CSS selector per line.</div>\n";
 	echo "<div class='submit'><input type='submit' value='Save Changes' /></div>\n";
 	echo "<br />\n";
+	echo "<p>The access and secret keys can be found after logging into your Web Shrinker Dashboard at <a href='https://www.webshrinker.com/' target='_blank'>https://www.webshrinker.com</a>.<br /><b>Make sure the access and secret key are using the Thumbnails API v2 service.</b></p>\n";
 	echo "<div style='text-decoration: underline;'>Access Key</div>\n";
-	echo "<p>The access key can be found after logging into your Web Shrinker Dashboard at <a href='http://www.webshrinker.com' target='_blank'>http://www.webshrinker.com</a>.</p>\n";
 	echo "<input name='ws_access_key' type='text' value='".$accessKey."' />\n";
+	echo "<br />\n";
+	echo "<br />\n";
+	echo "<div style='text-decoration: underline;'>Secret Key</div>\n";
+	echo "<input name='ws_secret_key' type='text' value='".$secretKey."' />\n";
 	echo "<div class='submit'><input type='submit' value='Save Changes' /></div>\n";
 	echo "<br />\n";
 	echo "<div style='text-decoration: underline;'>Thumbnail Image Size</div>\n";
@@ -210,12 +253,34 @@ function webshrinker_hook_post_links($content) {
 	if (!$isHoverEnabled)
 		return $content;
 
+	$access_key = $settings['access_key'];
+	$secret_key = $settings['secret_key'];
+	$image_size = $settings['hover_size'];
+
+	$selectors = $settings['hover_selector'];
+	$selectors = explode(",", $selectors);
+
 	// Add our class to links that already have a class
 	$content = preg_replace('/(<a.*?\s*class\s*=\s*["|\'].*?)(["|\'].*?>)/i', '$1 webshrinker_post_hover $2', $content);
 	// Add our class to links that don't already have a class
 	$content = preg_replace('/(<a.*?)>(?<! class)/i', '$1 class="webshrinker_post_hover">', $content);
 
-	return $content;
+	$html = str_get_html($content);
+
+    /* Add the data-ws attribute to the elements matching the CSS selectors so that the JavaScript can find them */
+	foreach ($selectors as $selector) {
+		foreach ($html->find($selector) as $node) {
+			$target = base64_encode($node->href);
+
+			$apiUrl = "https://api.webshrinker.com/";
+			$apiRequest = "thumbnails/v2/{$target}/info?size={$image_size}&key={$access_key}";
+			$apiRequest .= "&hash=" . md5(sprintf("%s:%s", $secret_key, $apiRequest));
+
+			$node->{"data-ws-info"} = $apiUrl . $apiRequest;
+		}
+	}
+
+	return $html;
 }
 
 add_action('wp_enqueue_scripts', 'webshrinker_init');
@@ -225,5 +290,3 @@ register_activation_hook(__FILE__, 'webshrinker_init_db');
 register_uninstall_hook(__FILE__, 'webshrinker_uninstall_db');
 
 add_filter('the_content', 'webshrinker_hook_post_links');
-
-?>
