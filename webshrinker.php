@@ -77,10 +77,11 @@ function webshrinker_init_db() {
 		add_option('webshrinker_version', WEBSHRINKER_VERSION);
 	} else {
 		// Upgrade path
-		$old_version = get_option('webshrinker_version', '1.0');
+		$old_version = get_option('webshrinker_version', '1.1');
 
 		switch ($old_version) {
 			case '1.0':
+			case '1.1':
 				$sql = "ALTER TABLE ".WEBSHRINKER_DB_TABLE." ADD COLUMN secret_key CHAR(36) AFTER access_key";
 				$result = $wpdb->query($sql);
 
