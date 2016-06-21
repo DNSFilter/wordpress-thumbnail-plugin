@@ -3,7 +3,7 @@ Contributors: webshrinker
 Donate link: https://www.webshrinker.com/
 Tags: website preview, link preview, website thumbnail, snapshot, thumbnail, shrink, websnapr, web shrinker, webshrinker
 Requires at least: 2.9
-Tested up to: 4.4.2
+Tested up to: 4.5.3
 Stable tag: trunk
 
 Enhance your post links by enabling a popup preview thumbnail image of the destination website
