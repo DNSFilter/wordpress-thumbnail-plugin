@@ -3,7 +3,7 @@ Contributors: webshrinker
 Donate link: https://www.webshrinker.com/
 Tags: website preview, link preview, website thumbnail, snapshot, thumbnail, shrink, websnapr, web shrinker, webshrinker
 Requires at least: 2.9
-Tested up to: 4.7.2
+Tested up to: 4.8.2
 Stable tag: trunk
 
 Enhance your post links by enabling a popup preview thumbnail image of the destination website
@@ -39,3 +39,6 @@ A free or paid [Web Shrinker](https://www.webshrinker.com) account is required a
 
 = 2.0 =
 * Updated to use Web Shrinker Thumbnail API v2.
+
+= 2.1 =
+* Fixed an issue that could appear when trying to add new blog posts.

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package WebShrinker
- * @version 2.0
+ * @version 2.1
  */
 /*
 Plugin Name: Web Shrinker Site Thumbnails
@@ -268,7 +268,10 @@ function webshrinker_hook_post_links($content) {
 
 	$html = str_get_html($content);
 
-    /* Add the data-ws attribute to the elements matching the CSS selectors so that the JavaScript can find them */
+	if (!$html)
+		return $content;
+
+	/* Add the data-ws attribute to the elements matching the CSS selectors so that the JavaScript can find them */
 	foreach ($selectors as $selector) {
 		foreach ($html->find($selector) as $node) {
 			$target = base64_encode($node->href);
